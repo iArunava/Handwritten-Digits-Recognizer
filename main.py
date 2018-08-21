@@ -1,10 +1,14 @@
 import numpy as np
 import tensorflow as tf
 import argparse
+
+from tensorflow.python.framework import graph_util
 from helper import *
+
 
 model_name = '3dense'
 image_labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+FLAGS = None
 
 def forward_propagation(X):
 
@@ -65,9 +69,13 @@ def get_minibatch(X, y, mb_size):
 
     return mini_batches
 
-def save_graph_to_file(sess, graph, graph_file_name='model.pb'):
+def save_graph_to_file(sess, graph, graph_file_name=FLAGS.output_graph):
     output_graph_def = graph_util.convert_variables_to_constants(sess,
-                                    graph.as_graph_def(), [FLAGS.final_])
+                                    graph.as_graph_def(), [FLAGS.final_tensor_name])
+    with gFile.FastGFile(graph_file_name, 'wb'):
+        f.write(output_graph_def.SerializeToString())
+    return
+
 def model(X_train, y_train, X_val, y_val, learning_rate=0.001, epochs=1500,
             mb_size=200):
 
@@ -200,5 +208,6 @@ if __name__ == '__main__':
             assumes that there is a file "mnist.npz" in the directory mentioned with\
              this argument.\n The required dataset can be downloaded from here: \
              https://www.kaggle.com/vikramtiwari/mnist-numpy')
-             
+
+    FLAGS, unparsed = parser.parse_known_args()
     run_model_with_data()
