@@ -1,8 +1,10 @@
 import numpy as np
 import tensorflow as tf
+import argparse
 from helper import *
 
 model_name = '3dense'
+image_labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
 def forward_propagation(X):
 
@@ -14,7 +16,7 @@ def forward_propagation(X):
                              bias_initializer=tf.zeros_initializer(),
                              activation=tf.nn.relu,
                              name='dense2')
-                             
+
     dense3 = tf.layers.dense(inputs=dense2, units=10, kernel_initializer=tf.random_normal_initializer,
                              bias_initializer=tf.zeros_initializer(),
                              #activation=tf.nn.relu,
@@ -63,6 +65,9 @@ def get_minibatch(X, y, mb_size):
 
     return mini_batches
 
+def save_graph_to_file(sess, graph, graph_file_name='model.pb'):
+    output_graph_def = graph_util.convert_variables_to_constants(sess,
+                                    graph.as_graph_def(), [FLAGS.final_])
 def model(X_train, y_train, X_val, y_val, learning_rate=0.001, epochs=1500,
             mb_size=200):
 
@@ -124,8 +129,7 @@ def model(X_train, y_train, X_val, y_val, learning_rate=0.001, epochs=1500,
                     s = sess.run(merged, feed_dict={X:X_val, y:y_val_oh})
                     writer.add_summary(s, step)
 
-        tf.saved_model.simple_save(sess, './' + model_name + '_modeldir',
-                        inputs={"X":X, "y":y}, outputs={"z":prediction})
+
         '''
         save_path = saver.save(sess, './var_dir/model.ckpt')
         print ('Model saved in path: %s' % save_path)
@@ -157,4 +161,44 @@ def run_model_with_data():
     model(X_train, y_train, X_val, y_val, mb_size=256, epochs=10)
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model_name',
+        type=str,
+        default='mnist_neural_net',
+        help='Name of the model you are building. Note: This name will be used\
+              to create directory when visualizing model summary with Tensorboard.')
+
+    parser.add_argument('--output_graph',
+        type=str,
+        default='./output_graph.pb',
+        help='Where to save the model')
+
+    parser.add_argument('--output_labels',
+        type=str,
+        default='output_labels.txt',
+        help='Where to save the labels for the graph')
+
+    parser.add_argument('--tb_dir',
+        type=str,
+        default='./tf_summaries/',
+        help='Where to save the summaries for TensorBoard')
+
+    parser.add_argument('--epochs',
+        type=int,
+        default=500,
+        help='How many epochs to run')
+
+    parser.add_argument('--learning_rate',
+        type=float,
+        default=0.01,
+        help='The learning rate to use while training the model')
+
+    parser.add_argument('--data_dir',
+        type=str,
+        default='./mnist/',
+        help='The folder where the MNIST data is located. Do note the program \
+            assumes that there is a file "mnist.npz" in the directory mentioned with\
+             this argument.\n The required dataset can be downloaded from here: \
+             https://www.kaggle.com/vikramtiwari/mnist-numpy')
+             
     run_model_with_data()
